@@ -17,6 +17,8 @@ jobs:
       with:
         node-version: 14
         cache: 'yarn'
+    - run: yarn install
+    - name: Run script
       env:
         RECUETIME_API_KEY: '${{ secrets.RECUETIME_API_KEY }}'
         TWITTER_USERNAME: '${{ secrets.TWITTER_USERNAME }}'
@@ -24,5 +26,4 @@ jobs:
         TWITTER_CONSUMER_SECRET: '${{ secrets.TWITTER_CONSUMER_SECRET }}'
         TWITTER_ACCESS_TOKEN_KEY: '${{ secrets.TWITTER_ACCESS_TOKEN_KEY }}'
         TWITTER_ACCESS_TOKEN_SECRET: '${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}'
-    - run: yarn install
-    - run: node index.js
+      run: node index.js
