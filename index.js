@@ -3,9 +3,9 @@ require('dotenv').config();
 const dateFns = require('date-fns');
 const twitter = require('twitter-lite');
 
-const getTimeSpentOnTwitterInLastHour = async () => {
+const getTimeSpentOnTwitterInLastFourHours = async () => {
     const url = `https://www.rescuetime.com/anapi/data`;
-    console.log('Getting time spent on twitter in last hour');
+    console.log('Getting time spent on twitter in last 4 hours');
     const rescueTimeResponse = await axios({
         url,
         params: {
@@ -13,15 +13,22 @@ const getTimeSpentOnTwitterInLastHour = async () => {
             key: process.env.RECUETIME_API_KEY,
             perspective: 'interval',
             restrict_kind: 'activity',
-            restrict_begin: dateFns.format(dateFns.startOfYesterday(), 'yyyy-MM-dd'),
-            restrict_end: dateFns.format(dateFns.startOfToday(), 'yyyy-MM-dd'),
-            resolution_time: 'hour',
+            restrict_begin: dateFns.format(dateFns.startOfToday(), 'yyyy-MM-dd'),
+            restrict_end: dateFns.format(dateFns.startOfTomorrow(), 'yyyy-MM-dd'),
+            resolution_time: 'minute',
         }
     })
     const rows = rescueTimeResponse.data.rows;
     const filteredRows = rows.filter(row => row[3].toLowerCase().includes('twitter'));
-    const lastHourRows = filteredRows.filter(row => dateFns.differenceInMinutes(Date.now(), dateFns.parseJSON(row[0])) <= 60);
-    const sum = lastHourRows.reduce((acc, row) => acc + row[1], 0);
+    const lastFourHourRows = filteredRows.filter(row => {
+        const parsedDate = dateFns.parseJSON(row[0]);
+        const diff = dateFns.differenceInHours(Date.now(), parsedDate);
+        console.log(`${parsedDate} - ${diff}`);
+        return diff <= 4
+    });
+    const sum = lastFourHourRows.reduce((acc, row) => {
+        return acc + row[1]
+    }, 0);
     console.log(`Time spent on twitter in last hour: ${sum} seconds`);
     return sum;
 }
@@ -38,7 +45,7 @@ const clientV1 = new twitter({
 // 2. Store the count of tweets and replies in a variable
 // 3. Send a DM to the user with the count of tweets and replies and the total time spent on twitter in last hour
 const getTweetsAndReplies = async (totalTimeOnTwitter) => {
-    console.log('Getting tweets and replies in the last hour');
+    console.log('Getting tweets and replies in the last 4 hours');
     let tweets = [];
     try {
         tweets = await clientV1.get(`statuses/user_timeline`, {
@@ -63,10 +70,10 @@ const getTweetsAndReplies = async (totalTimeOnTwitter) => {
     }
     const tweetsCount = tweets.filter(t => {
         const parsedDate = dateFns.parse(t.created_at, "EEE MMM dd HH:mm:ss x yyyy", new Date());
-        const diffInMinutes = dateFns.differenceInMinutes(Date.now(), parsedDate);
-        return diffInMinutes < 60
+        const diffInMinutes = dateFns.differenceInHours(Date.now(), parsedDate);
+        return diffInMinutes <= 4
     }).length;
-    const messageContents = `You have ${tweetsCount} tweets in the last hour. You have spent ${dateFns.secondsToMinutes(totalTimeOnTwitter)} minutes on Twitter.`;
+    const messageContents = `You have ${tweetsCount} tweets in the last 4 hours. You have spent ${dateFns.secondsToMinutes(totalTimeOnTwitter)} minutes on Twitter.`;
     console.log(`Sending message to user: ${messageContents}`);
     const twitterUser = await clientV1.get('users/show', {
         screen_name: process.env.TWITTER_USERNAME
@@ -98,12 +105,9 @@ const getTweetsAndReplies = async (totalTimeOnTwitter) => {
 };
 
 const justDoIt = async () => {
-    try {
-        const timeOnTwitter = await getTimeSpentOnTwitterInLastHour(); // total time spent on twitter in last hour
-        await getTweetsAndReplies(timeOnTwitter);
-    } catch (error) {
-        console.log(error);
-    }
+    const timeOnTwitter = await getTimeSpentOnTwitterInLastFourHours(); // total time spent on twitter in last hour
+    if (timeOnTwitter === 0) return;
+    await getTweetsAndReplies(timeOnTwitter);
 }
 
 justDoIt()
