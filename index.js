@@ -23,7 +23,6 @@ const getTimeSpentOnTwitterInLastFourHours = async () => {
     const lastFourHourRows = filteredRows.filter(row => {
         const parsedDate = dateFns.parseJSON(row[0]);
         const diff = dateFns.differenceInHours(Date.now(), parsedDate);
-        console.log(`${parsedDate} - ${diff}`);
         return diff <= 4
     });
     const sum = lastFourHourRows.reduce((acc, row) => {
@@ -76,9 +75,9 @@ const getTweetsAndReplies = async (totalTimeOnTwitter) => {
     const totalTimeOnTwitterInMinutes = dateFns.secondsToMinutes(totalTimeOnTwitter);
     const rate = tweetsCount / totalTimeOnTwitterInMinutes;
     const messageContents = `
-    Total tweets in the last 4 hours: ${tweetsCount}
-    Time spent: ${totalTimeOnTwitterInMinutes} minutes
-    Rate of engagement: ${rate} tweets/minute`;
+Total tweets in the last 4 hours: ${tweetsCount}
+Time spent: ${totalTimeOnTwitterInMinutes} minutes
+Rate of engagement: ${(typeof rate === 'number') ? rate.toFixed(2) : 'N/a'} tweets/minute`;
     console.log(`Sending message to user: ${messageContents}`);
     const twitterUser = await clientV1.get('users/show', {
         screen_name: process.env.TWITTER_USERNAME
