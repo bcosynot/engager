@@ -45,7 +45,7 @@ const clientV1 = new twitter({
 // 2. Store the count of tweets and replies in a variable
 // 3. Send a DM to the user with the count of tweets and replies and the total time spent on twitter in last hour
 const getTweetsAndReplies = async (totalTimeOnTwitter) => {
-    console.log('Getting tweets and replies in the last 4 hours');
+    console.log(`Getting tweets and replies in the last ${intervalHours} hours`);
     let tweets = [];
     try {
         tweets = await clientV1.get(`statuses/user_timeline`, {
