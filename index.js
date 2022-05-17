@@ -3,6 +3,7 @@ require('dotenv').config();
 const dateFns = require('date-fns');
 const twitter = require('twitter-lite');
 
+const intervalHours = 4;
 const getTimeSpentOnTwitterInLastFourHours = async () => {
     const url = `https://www.rescuetime.com/anapi/data`;
     console.log('Getting time spent on twitter in last 4 hours');
@@ -20,15 +21,15 @@ const getTimeSpentOnTwitterInLastFourHours = async () => {
     })
     const rows = rescueTimeResponse.data.rows;
     const filteredRows = rows.filter(row => row[3].toLowerCase().includes('twitter'));
-    const lastFourHourRows = filteredRows.filter(row => {
+    const lastInterval = filteredRows.filter(row => {
         const parsedDate = dateFns.parseJSON(row[0]);
         const diff = dateFns.differenceInHours(Date.now(), parsedDate);
-        return diff <= 4
+        return diff <= intervalHours
     });
-    const sum = lastFourHourRows.reduce((acc, row) => {
+    const sum = lastInterval.reduce((acc, row) => {
         return acc + row[1]
     }, 0);
-    console.log(`Time spent on twitter in last hour: ${sum} seconds`);
+    console.log(`Time spent on twitter in last ${intervalHours} hours: ${sum} seconds`);
     return sum;
 }
 
@@ -69,13 +70,13 @@ const getTweetsAndReplies = async (totalTimeOnTwitter) => {
     }
     const tweetsCount = tweets.filter(t => {
         const parsedDate = dateFns.parse(t.created_at, "EEE MMM dd HH:mm:ss x yyyy", new Date());
-        const diffInMinutes = dateFns.differenceInHours(Date.now(), parsedDate);
-        return diffInMinutes <= 4
+        const diffInHours = dateFns.differenceInHours(Date.now(), parsedDate);
+        return diffInHours <= intervalHours
     }).length;
     const totalTimeOnTwitterInMinutes = dateFns.secondsToMinutes(totalTimeOnTwitter);
     const rate = tweetsCount / totalTimeOnTwitterInMinutes;
     const messageContents = `
-Total tweets in the last 4 hours: ${tweetsCount}
+Total tweets in the last ${intervalHours} hours: ${tweetsCount}
 Time spent: ${totalTimeOnTwitterInMinutes} minutes
 Rate of engagement: ${(typeof rate === 'number') ? rate.toFixed(2) : 'N/a'} tweets/minute`;
     console.log(`Sending message to user: ${messageContents}`);
@@ -106,6 +107,11 @@ Rate of engagement: ${(typeof rate === 'number') ? rate.toFixed(2) : 'N/a'} twee
             console.log(e);
         }
     }
+    const telegramData = {
+        'chat_id': process.env.TELEGRAM_CHAT_ID,
+        'text': messageContents
+    }
+    await axios.post(`https://api.telegram.com/bot${process.env.TELEGRAM_API_KEY}/sendMessage`, telegramData)
 };
 
 const justDoIt = async () => {
