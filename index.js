@@ -22,12 +22,12 @@ const getTimeSpentOnTwitterInLastFourHours = async () => {
     const rows = rescueTimeResponse.data.rows;
     const filteredRows = rows.filter(row => row[3].toLowerCase().includes('twitter'));
     const lastInterval = filteredRows.filter(row => {
-        const parsedDate = dateFns.parseJSON(row[0]);
+        const parsedDate = dateFns.parseJSON(`${row[0]}-04:00`);
         const diff = dateFns.differenceInHours(Date.now(), parsedDate);
         return diff <= intervalHours
     });
     const sum = lastInterval.reduce((acc, row) => {
-        return acc + row[1]
+        return acc + row[1]     
     }, 0);
     console.log(`Time spent on twitter in last ${intervalHours} hours: ${sum} seconds`);
     return sum;
@@ -111,7 +111,7 @@ Rate of engagement: ${(typeof rate === 'number') ? rate.toFixed(2) : 'N/a'} twee
         'chat_id': process.env.TELEGRAM_CHAT_ID,
         'text': messageContents
     }
-    await axios.post(`https://api.telegram.com/bot${process.env.TELEGRAM_API_KEY}/sendMessage`, telegramData)
+    await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_API_KEY}/sendMessage`, telegramData)
 };
 
 const justDoIt = async () => {
