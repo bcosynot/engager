@@ -20,7 +20,7 @@ const getTimeSpentOnTwitterInLastFourHours = async () => {
         }
     })
     const rows = rescueTimeResponse.data.rows;
-    const filteredRows = rows.filter(row => row[3].toLowerCase().includes('twitter'));
+    const filteredRows = rows.filter(row => row[3].toLowerCase().includes('twitter') || row[3].toLowerCase().includes('tweet'));
     const lastInterval = filteredRows.filter(row => {
         const parsedDate = dateFns.parseJSON(`${row[0]}-04:00`);
         const diff = dateFns.differenceInHours(Date.now(), parsedDate);
